@@ -1,0 +1,2 @@
+# nvide
+NeoVim modern configuration
