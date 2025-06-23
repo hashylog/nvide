@@ -1,0 +1,21 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <path d="M98.382 20C99.1253 20 99.6088 20.7823 99.2764 21.4472L61.8944 96.2111C61.4225 97.155 60 96.8192 60 95.7639V60L79.7236 20.5528C79.893 20.214 80.2393 20 80.618 20H98.382Z" fill="url(#paint0_linear_20_29)" filter="url(#shadow)"/>
+  <path d="M70 80L60.8944 98.2111C60.5259 98.9482 59.4741 98.9482 59.1056 98.2111L20.7236 21.4472C20.3912 20.7823 20.8747 20 21.6181 20H39.382C39.7607 20 40.107 20.214 40.2764 20.5528L60 60L70 80Z" fill="url(#paint1_linear_20_29)" filter="url(#shadow)"/>
+
+  <defs>
+
+    <linearGradient id="paint0_linear_20_29" x1="100" y1="20" x2="36" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0.211538" stop-color="#00E6C3"/>
+      <stop offset="1" stop-color="#0087F6"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear_20_29" x1="60" y1="20" x2="-3.99999" y2="51.9999" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E6C3"/>
+      <stop offset="1" stop-color="#0087F6"/>
+    </linearGradient>
+
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+  <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.15"/>
+</filter> 
+  </defs>
+</svg>
