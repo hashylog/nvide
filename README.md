@@ -17,6 +17,10 @@ This configuration bridges that gap by providing a NeoVim setup that:
 
 Whether you’re switching from Visual Studio Code, or you simply want a fast IDE-like setup in the terminal, NVide gives you the experience you're used to, with the performance you've always wanted.
 
+#### About
+
+NVide is heavily inspired by the **[Micro Editor](https://github.com/zyedidia/micro)**. Since Micro isn’t very popular and lacks a wide range of plugins, I decided to make NeoVim resemble it as closely as possible through NVide.
+
 <br>
 
 # Installation
