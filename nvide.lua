@@ -1,6 +1,5 @@
 --[[
 
-
                           oo       dP
                                    88
         88d888b. dP   .dP dP .d888b88 .d8888b.
@@ -14,9 +13,15 @@
         clipboard integration, fuzzy search,
         and GUI-like UX.
 
+]]--
 
-]]
---
+local Settings = {
+  ['EnableFindShortcut'] = true,
+  ['EnableTerminalShortcut'] = true,
+  ['EnableSidebarShortcut'] = true,
+  ['EnableFindFilesShortcut'] = true,
+  ['EnableGoToLineShortcut'] = true,
+}
 
 -- Load mswin.vim configuration from VimScript to simulate Windows-like behaviors
 -- mswin.vim
@@ -188,11 +193,18 @@ vim.cmd [[
     " Use the mswin.vim script for most mappings
     " source <sfile>:p:h/mswin.vim
 
+	" NVide:
     " Allow for using CTRL-Q in Insert mode to quit Vim.
     inoremap <C-Q> <C-O>:confirm qall<CR>
+	" Allow for using CTRL-Q in Normal Mode to quit Vim.
+    nnoremap <C-Q> :confirm qall<CR>
+    " Allow for using CTRL-Q in Visual Mode to quit Vim.
+    vnoremap <C-Q> <Esc>:confirm qall<CR>
+    " Allow for using CTRL-Q in Command Mode to quit Vim.
+    cnoremap <C-Q> <C-C>:confirm qall<CR>
 
     " Vim is in Insert mode by default
-    " set insertmode
+    startinsert
 
     " Make a buffer hidden when editing another one
     set hidden
@@ -253,44 +265,153 @@ vim.cmd [[
     " vim: set sw=2 :
 ]]
 
--- CTRL + F Find
-if pcall(require, 'telescope.builtin') then
-  vim.keymap.set({ 'n', 'i' }, '<C-F>', function()
-    require('telescope.builtin').current_buffer_fuzzy_find {
-      attach_mappings = function(_, map)
-        map('i', '<CR>', function(prompt_bufnr)
-          require('telescope.actions').select_default(prompt_bufnr)
-          vim.schedule(function()
-            vim.cmd 'startinsert'
-          end)
+-- Prevent leaving Insert Mode except via [Ctrl + E]
+_G.nvide_normal_mode = false
+
+-- Always enter Insert Mode when entering a buffer
+vim.api.nvim_create_autocmd("BufEnter", {
+  pattern = "*",
+  callback = function()
+    if vim.fn.mode() ~= "i" and vim.bo.buftype == "" then
+      vim.cmd("startinsert")
+    end
+  end,
+})
+
+vim.keymap.set('i', '<C-E>', function()
+  _G.nvide_normal_mode = true
+  vim.cmd('stopinsert')
+end, { noremap = true, silent = true })
+
+vim.api.nvim_create_autocmd('ModeChanged', {
+  pattern = '*',
+  callback = function()
+    if vim.fn.mode() == 'n' then
+      if not _G.nvide_normal_mode then
+        vim.schedule(function()
+          vim.cmd('startinsert')
         end)
-        return true
-      end,
-    }
+      else
+        _G.nvide_normal_mode = false
+      end
+    end
+  end,
+})
+
+vim.api.nvim_set_keymap('i', '<Esc>', '<NOP>', { noremap = true })
+vim.api.nvim_set_keymap('i', '<C-c>', '<NOP>', { noremap = true })
+
+
+
+-- Fuzzy finder in current buffer [Ctrl + F]
+if Settings['EnableFindShortcut'] then
+  if pcall(require, 'telescope.builtin') then
+    vim.keymap.set({ 'n', 'i' }, '<C-F>', function()
+      require('telescope.builtin').current_buffer_fuzzy_find {
+        attach_mappings = function(_, map)
+          map('i', '<CR>', function(prompt_bufnr)
+            require('telescope.actions').select_default(prompt_bufnr)
+            vim.schedule(function()
+              vim.cmd 'startinsert'
+            end)
+          end)
+          return true
+        end,
+      }
+    end, { noremap = true, silent = true })
+  end  
+end
+
+
+
+-- Fuzzy finder for files [Ctrl + P]
+if Settings['EnableFindFilesShortcut'] then
+  if pcall(require, 'telescope.builtin') then
+    vim.keymap.set({ 'n', 'i' }, '<C-P>', function()
+      require('telescope.builtin').find_files()
+    end, { noremap = true, silent = true })
+  end
+end
+
+
+
+-- Open integrated terminal [Ctrl + T]
+if Settings['EnableTerminalShortcut'] then
+  vim.keymap.set({ 'n', 'i' }, '<C-T>', function()
+    vim.cmd('split | terminal')
+    vim.cmd('startinsert')
   end, { noremap = true, silent = true })
 end
 
-if pcall(require, 'telescope.builtin') then
-  vim.api.nvim_create_autocmd('BufLeave', {
-    pattern = '*',
-    callback = function()
-      if vim.bo.filetype == 'TelescopePrompt' then
-        vim.schedule(function()
-          vim.cmd 'startinsert'
-        end)
-      end
-    end,
-  })
+
+
+-- Go to line [Ctrl + G]
+local function goto_line()
+  local was_insert = vim.fn.mode() == 'i'
+  if was_insert then vim.cmd('stopinsert') end
+  vim.ui.input({ prompt = "Go to line:" }, function(input)
+    if input and tonumber(input) then
+      vim.cmd(input .. "G")
+    end
+    if was_insert then vim.cmd('startinsert') end
+  end)
 end
 
--- CTRL + Backspace
-vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
-vim.keymap.set('i', '<C-H>', '<C-W>', { noremap = true })
+if Settings['EnableGoToLineShortcut'] then
+  vim.keymap.set({ 'n', 'i' }, '<C-G>', goto_line, { noremap = true, silent = true })
+end
 
--- CTRL + Arrows move Line
+
+
+-- Go to definition [Ctrl + T] [F12]
+
+--[[ 
+if pcall(require, 'telescope.builtin') then
+  
+  vim.keymap.set({ 'n', 'i' }, '<C-T>', function()
+    require('telescope.builtin').lsp_document_symbols()
+  end, { noremap = true, silent = true })
+  
+  vim.keymap.set({ 'n', 'i' }, '<F12>', function()
+    if vim.lsp.buf and vim.lsp.buf.definition then
+      vim.lsp.buf.definition()
+    end
+  end, { noremap = true, silent = true })
+  
+end
+
+]]--
+
+
+
+-- Move lines up/down with Alt+Up/Down
 vim.keymap.set('i', '<M-Up>', '<Esc>:m .-2<CR>==gi', { noremap = true, silent = true })
 vim.keymap.set('i', '<M-Down>', '<Esc>:m .+1<CR>==gi', { noremap = true, silent = true })
 vim.keymap.set('n', '<M-Up>', ':m .-2<CR>==', { noremap = true, silent = true })
 vim.keymap.set('n', '<M-Down>', ':m .+1<CR>==', { noremap = true, silent = true })
 vim.keymap.set('v', '<M-Up>', ":move '<-2<CR>gv=gv", { noremap = true, silent = true })
 vim.keymap.set('v', '<M-Down>', ":move '>+1<CR>gv=gv", { noremap = true, silent = true })
+
+
+
+-- TODO: Multi-line indentation in Visual Mode [Tab]
+-- ...
+
+
+
+-- Delete previous word in Insert Mode [Ctrl + Backspace]
+vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
+
+
+
+-- File explorer sidebar [Ctrl + B] (Requires 'neo-tree' plugin)
+local function toggle_neotree()
+  local was_insert = vim.fn.mode() == 'i'
+  if was_insert then vim.cmd('stopinsert') end
+  vim.cmd('Neotree toggle')
+  if was_insert then vim.cmd('startinsert') end
+end
+
+if Settings['EnableSidebarShortcut'] then
+  vim.keymap.set({ 'n', 'i' }, '<C-B>', toggle_neotree, { noremap = true, silent = true })
+end
