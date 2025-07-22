@@ -13,14 +13,30 @@
         clipboard integration, fuzzy search,
         and GUI-like UX.
 
-]]--
+]]
+--
 
 local Settings = {
-  ['EnableFindShortcut'] = true,
-  ['EnableTerminalShortcut'] = true,
-  ['EnableSidebarShortcut'] = true,
-  ['EnableFindFilesShortcut'] = true,
-  ['EnableGoToLineShortcut'] = true,
+  ['Find'] = {
+    ['Enabled'] = true,
+    ['Shortcut'] = '<C-F>',
+  },
+  ['Terminal'] = {
+    ['Enabled'] = true,
+    ['Shortcut'] = '<C-T>',
+  },
+  ['Sidebar'] = {
+    ['Enabled'] = true,
+    ['Shortcut'] = '<C-B>',
+  },
+  ['FindFiles'] = {
+    ['Enabled'] = true,
+    ['Shortcut'] = '<C-P>',
+  },
+  ['GoToLine'] = {
+    ['Enabled'] = true,
+    ['Shortcut'] = '<C-G>',
+  },
 }
 
 -- Load mswin.vim configuration from VimScript to simulate Windows-like behaviors
@@ -54,7 +70,7 @@ vim.cmd [[
     set backspace=indent,eol,start whichwrap+=<,>,[,]
 
     " backspace in Visual mode deletes selection
-    vnoremap <BS> d
+    vnoremap <BS> "_dd
 
     " the better solution would be to use has("clipboard_working"),
     " but that may not be available yet while starting up, so let's just check if
@@ -114,7 +130,7 @@ vim.cmd [[
     " using completions).
     noremap <C-S>		:update<CR>
     vnoremap <C-S>		<C-C>:update<CR>
-    inoremap <C-S>		<Esc>:update<CR>gi
+    inoremap <C-S>		<Esc>:update<CR>
 
     " For CTRL-V to work autoselect must be off.
     " On Unix we have two selections, autoselect can be used.
@@ -195,13 +211,13 @@ vim.cmd [[
 
 	" NVide:
     " Allow for using CTRL-Q in Insert mode to quit Vim.
-    inoremap <C-Q> <C-O>:confirm qall<CR>
+    inoremap <C-Q> <C-O>:confirm q<CR>
 	" Allow for using CTRL-Q in Normal Mode to quit Vim.
-    nnoremap <C-Q> :confirm qall<CR>
+    nnoremap <C-Q> :confirm q<CR>
     " Allow for using CTRL-Q in Visual Mode to quit Vim.
-    vnoremap <C-Q> <Esc>:confirm qall<CR>
+    vnoremap <C-Q> <Esc>:confirm q<CR>
     " Allow for using CTRL-Q in Command Mode to quit Vim.
-    cnoremap <C-Q> <C-C>:confirm qall<CR>
+    cnoremap <C-Q> <C-C>:confirm q<CR>
 
     " Vim is in Insert mode by default
     startinsert
@@ -269,18 +285,24 @@ vim.cmd [[
 _G.nvide_normal_mode = false
 
 -- Always enter Insert Mode when entering a buffer
-vim.api.nvim_create_autocmd("BufEnter", {
-  pattern = "*",
+vim.api.nvim_create_autocmd('BufEnter', {
+  pattern = '*',
   callback = function()
-    if vim.fn.mode() ~= "i" and vim.bo.buftype == "" then
-      vim.cmd("startinsert")
+    if vim.bo.buftype == '' and vim.bo.modifiable then
+      if vim.fn.mode() ~= 'i' then
+        vim.cmd 'startinsert'
+      end
+    else
+      if vim.fn.mode() == 'i' then
+        vim.cmd 'stopinsert'
+      end
     end
   end,
 })
 
 vim.keymap.set('i', '<C-E>', function()
   _G.nvide_normal_mode = true
-  vim.cmd('stopinsert')
+  vim.cmd 'stopinsert'
 end, { noremap = true, silent = true })
 
 vim.api.nvim_create_autocmd('ModeChanged', {
@@ -289,7 +311,7 @@ vim.api.nvim_create_autocmd('ModeChanged', {
     if vim.fn.mode() == 'n' then
       if not _G.nvide_normal_mode then
         vim.schedule(function()
-          vim.cmd('startinsert')
+          vim.cmd 'startinsert'
         end)
       else
         _G.nvide_normal_mode = false
@@ -301,12 +323,10 @@ vim.api.nvim_create_autocmd('ModeChanged', {
 vim.api.nvim_set_keymap('i', '<Esc>', '<NOP>', { noremap = true })
 vim.api.nvim_set_keymap('i', '<C-c>', '<NOP>', { noremap = true })
 
-
-
 -- Fuzzy finder in current buffer [Ctrl + F]
-if Settings['EnableFindShortcut'] then
+if Settings['Find']['Enabled'] then
   if pcall(require, 'telescope.builtin') then
-    vim.keymap.set({ 'n', 'i' }, '<C-F>', function()
+    vim.keymap.set({ 'n', 'i' }, Settings['Find']['Shortcut'], function()
       require('telescope.builtin').current_buffer_fuzzy_find {
         attach_mappings = function(_, map)
           map('i', '<CR>', function(prompt_bufnr)
@@ -319,49 +339,45 @@ if Settings['EnableFindShortcut'] then
         end,
       }
     end, { noremap = true, silent = true })
-  end  
+  end
 end
 
-
-
 -- Fuzzy finder for files [Ctrl + P]
-if Settings['EnableFindFilesShortcut'] then
+if Settings['FindFiles']['Enabled'] then
   if pcall(require, 'telescope.builtin') then
-    vim.keymap.set({ 'n', 'i' }, '<C-P>', function()
+    vim.keymap.set({ 'n', 'i' }, Settings['FindFiles']['Shortcut'], function()
       require('telescope.builtin').find_files()
     end, { noremap = true, silent = true })
   end
 end
 
-
-
 -- Open integrated terminal [Ctrl + T]
-if Settings['EnableTerminalShortcut'] then
-  vim.keymap.set({ 'n', 'i' }, '<C-T>', function()
-    vim.cmd('split | terminal')
-    vim.cmd('startinsert')
+if Settings['Terminal']['Enabled'] then
+  vim.keymap.set({ 'n', 'i' }, Settings['Terminal']['Shortcut'], function()
+    vim.cmd 'split | terminal'
+    vim.cmd 'startinsert'
   end, { noremap = true, silent = true })
 end
-
-
 
 -- Go to line [Ctrl + G]
 local function goto_line()
   local was_insert = vim.fn.mode() == 'i'
-  if was_insert then vim.cmd('stopinsert') end
-  vim.ui.input({ prompt = "Go to line:" }, function(input)
+  if was_insert then
+    vim.cmd 'stopinsert'
+  end
+  vim.ui.input({ prompt = 'Go to line:' }, function(input)
     if input and tonumber(input) then
-      vim.cmd(input .. "G")
+      vim.cmd(input .. 'G')
     end
-    if was_insert then vim.cmd('startinsert') end
+    if was_insert then
+      vim.cmd 'startinsert'
+    end
   end)
 end
 
-if Settings['EnableGoToLineShortcut'] then
-  vim.keymap.set({ 'n', 'i' }, '<C-G>', goto_line, { noremap = true, silent = true })
+if Settings['GoToLine']['Enabled'] then
+  vim.keymap.set({ 'n', 'i' }, Settings['GoToLine']['Shortcut'], goto_line, { noremap = true, silent = true })
 end
-
-
 
 -- Go to definition [Ctrl + T] [F12]
 
@@ -379,10 +395,8 @@ if pcall(require, 'telescope.builtin') then
   end, { noremap = true, silent = true })
   
 end
-
-]]--
-
-
+]]
+--
 
 -- Move lines up/down with Alt+Up/Down
 vim.keymap.set('i', '<M-Up>', '<Esc>:m .-2<CR>==gi', { noremap = true, silent = true })
@@ -392,26 +406,24 @@ vim.keymap.set('n', '<M-Down>', ':m .+1<CR>==', { noremap = true, silent = true 
 vim.keymap.set('v', '<M-Up>', ":move '<-2<CR>gv=gv", { noremap = true, silent = true })
 vim.keymap.set('v', '<M-Down>', ":move '>+1<CR>gv=gv", { noremap = true, silent = true })
 
-
-
 -- TODO: Multi-line indentation in Visual Mode [Tab]
 -- ...
-
-
 
 -- Delete previous word in Insert Mode [Ctrl + Backspace]
 vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
 
-
-
 -- File explorer sidebar [Ctrl + B] (Requires 'neo-tree' plugin)
 local function toggle_neotree()
   local was_insert = vim.fn.mode() == 'i'
-  if was_insert then vim.cmd('stopinsert') end
-  vim.cmd('Neotree toggle')
-  if was_insert then vim.cmd('startinsert') end
+  if was_insert then
+    vim.cmd 'stopinsert'
+  end
+  vim.cmd 'Neotree toggle'
+  if was_insert then
+    vim.cmd 'startinsert'
+  end
 end
 
-if Settings['EnableSidebarShortcut'] then
-  vim.keymap.set({ 'n', 'i' }, '<C-B>', toggle_neotree, { noremap = true, silent = true })
+if Settings['Sidebar']['Enabled'] then
+  vim.keymap.set({ 'n', 'i' }, Settings['Sidebar']['Shortcut'], toggle_neotree, { noremap = true, silent = true })
 end
