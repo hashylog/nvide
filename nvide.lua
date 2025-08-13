@@ -211,7 +211,7 @@ vim.cmd [[
 	" source <sfile>:p:h/mswin.vim
 	
 	" Allow for using CTRL-Q in Insert mode to quit Vim.
-	inoremap <C-Q> <C-O>:confirm qall<CR>
+	inoremap <C-Q> <C-O>:confirm q<CR>
 	
 	" Vim is in Insert mode by default
 	" NVide: Changed "set insertmode" to "startinsert"
