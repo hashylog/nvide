@@ -14,8 +14,8 @@ NVIDE_FILE="$LUA_DIR/nvide.lua"
 # Create directories if they don't exist
 mkdir -p "$LUA_DIR"
 
-# Copy nvide.lua to the correct location
-cp "$(dirname "$0")/nvide.lua" "$NVIDE_FILE"
+# Download nvide.lua to the correct location
+curl -fsSL https://raw.githubusercontent.com/hashylog/nvide/main/nvide.lua -o "$NVIDE_FILE"
 
 # Check if init.lua exists, create if not
 if [ ! -f "$INIT_FILE" ]; then
