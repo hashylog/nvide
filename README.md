@@ -25,8 +25,34 @@ NVide is heavily inspired by the **[Micro Editor](https://github.com/zyedidia/mi
 
 # Installation
 
+You can install NVide in two ways: automatically using the provided script, or manually following the steps below.
+
+## Automated Installation
+
+For a quick setup, download and run the install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hashylog/nvide/main/install.sh | bash
+```
+
+Alternatively, clone the repository and run:
+
+```bash
+git clone https://github.com/hashylog/nvide.git
+cd nvide
+./install.sh
+```
+
+## Manual Installation
+
 #### 1- Download nvide.lua
 Copy or download the nvide.lua file from this repository.
+
+You can also download it directly using curl:
+
+```bash
+curl -o ~/.config/nvim/lua/nvide.lua https://raw.githubusercontent.com/hashylog/nvide/main/nvide.lua
+```
 
 #### 2- Move the file
 Place it inside your Neovim configuration folder:
