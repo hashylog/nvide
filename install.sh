@@ -24,6 +24,8 @@ fi
 
 # Check if require('nvide') is already in init.lua
 if ! grep -q "require('nvide')" "$INIT_FILE"; then
+    echo "" >> "$INIT_FILE"
+    echo "-- NVide" >> "$INIT_FILE"
     echo "require('nvide')" >> "$INIT_FILE"
     echo "Added require('nvide') to $INIT_FILE"
 else
