@@ -8,9 +8,10 @@
 
 <br>
 
+# About
+
 NVide is a modern NeoVim configuration designed to deliver a smooth and intuitive development experience, especially for developers who appreciate the usability of GUI editors, but crave the performance and flexibility of terminal-based tools.
 
-#### About
 
 NVide is heavily inspired by the **[Micro Editor](https://github.com/zyedidia/micro)**. Since Micro isn’t very popular and lacks a wide range of plugins, I decided to make NeoVim resemble it as closely as possible through NVide.
 
