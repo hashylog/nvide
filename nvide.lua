@@ -19,14 +19,6 @@ local Settings = {
     ['Enabled'] = true,
     ['Shortcut'] = '<C-F>',
   },
-  ['Terminal'] = {
-    ['Enabled'] = true,
-    ['Shortcut'] = '<C-T>',
-  },
-  ['Sidebar'] = {
-    ['Enabled'] = true,
-    ['Shortcut'] = '<C-B>',
-  },
   ['FindFiles'] = {
     ['Enabled'] = true,
     ['Shortcut'] = '<C-P>',
@@ -278,6 +270,18 @@ vim.cmd [[
 
 
 
+-- Map CTRL-Q in all modes
+-- normal, visual, select, operator
+vim.keymap.set({'n', 'v', 's', 'o'}, '<C-q>', ':q<CR>', { noremap = true, silent = true })
+
+-- insert mode
+vim.keymap.set('i', '<C-q>', '<Esc>:q<CR>', { noremap = true, silent = true })
+
+-- terminal mode
+vim.keymap.set('t', '<C-q>', '<C-\\><C-n>:q<CR>', { noremap = true, silent = true })
+
+
+
 -- Smart toggle between modes with [Ctrl + E]
 -- Insert <-> Normal, any other mode -> Insert
 local function smart_mode_toggle()
@@ -356,5 +360,3 @@ vim.keymap.set('x', '<S-Tab>', '<gv', { noremap = true, silent = true })
 
 -- Delete previous word in Insert Mode [Ctrl + Backspace]
 vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
-
-
