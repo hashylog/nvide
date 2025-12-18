@@ -1,18 +1,17 @@
---[[
 
-                          oo       dP
-                                   88
-        88d888b. dP   .dP dP .d888b88 .d8888b.
-        88'  `88 88   d8' 88 88'  `88 88ooood8
-        88    88 88 .88'  88 88.  .88 88.  ...
-        dP    dP 8888P'   dP `88888P8 `88888P'
-
-        NVide Configuration File
-        Custom NeoVim setup to emulate Micro Editor
-        behavior with extended keybindings,
-        clipboard integration, and more.
-
-]]--
+--
+--                           oo       dP
+--                                    88
+--         88d888b. dP   .dP dP .d888b88 .d8888b.
+--         88'  `88 88   d8' 88 88'  `88 88ooood8
+--         88    88 88 .88'  88 88.  .88 88.  ...
+--         dP    dP 8888P'   dP `88888P8 `88888P'
+--
+--         NVide Configuration File
+--         Custom NeoVim setup to emulate 
+--         Micro Editor behavior
+--
+--
 
 local Settings = {
   ['Find'] = {
@@ -299,33 +298,35 @@ local function smart_save()
     end)
   end
 end
--- Remap CTRL+S to use the smart function
--- (This overrides the mswin.vim mappings)
+
+-- Remap keybind to use the smart function
 vim.keymap.set('n', '<C-S>', smart_save, { noremap = true, silent = true })
-vim.keymap.set('i', '<C-S>', function()
-  vim.cmd('stopinsert')
-  smart_save()
-end, { noremap = true, silent = true })
-vim.keymap.set('v', '<C-S>', function()
-  vim.cmd('normal! ')
-  smart_save()
-end, { noremap = true, silent = true })
+vim.keymap.set('i', '<C-S>', function() vim.cmd('stopinsert') smart_save() end, { noremap = true, silent = true })
+vim.keymap.set('v', '<C-S>', function() vim.cmd('normal! ') smart_save() end, { noremap = true, silent = true })
 
 
 
 -- Quit NeoVim [CTRL + Q]
+local function smart_quit()
+  if #vim.fn.getbufinfo({buflisted = 1}) == 1 then
+    vim.cmd('quit')
+  else
+    vim.cmd('bdelete')
+  end
+end
+
 -- normal, visual, select, operator
-vim.keymap.set({'n', 'v', 's', 'o'}, '<C-q>', ':q<CR>', { noremap = true, silent = true })
+vim.keymap.set({'n', 'v', 's', 'o'}, '<C-q>', smart_quit, { noremap = true, silent = true })
 
 -- insert mode
-vim.keymap.set('i', '<C-q>', '<Esc>:q<CR>', { noremap = true, silent = true })
+vim.keymap.set('i', '<C-q>', function() vim.cmd('stopinsert') smart_quit() end, { noremap = true, silent = true })
 
 -- terminal mode
 vim.keymap.set('t', '<C-q>', '<C-\\><C-n>:q<CR>', { noremap = true, silent = true })
 
 
 
--- Smart toggle between modes with [Ctrl + E]
+-- Smart toggle between modes with [CTRL + E]
 -- Insert <-> Normal, any other mode -> Insert
 local function smart_mode_toggle()
   local mode = vim.fn.mode()
@@ -335,14 +336,14 @@ local function smart_mode_toggle()
   elseif mode == 'n' then
     vim.cmd('startinsert')
   else
-    vim.cmd('normal! ')
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
     vim.schedule(function()
       vim.cmd('startinsert')
     end)
   end
 end
 
--- Mapear Ctrl+E para todos os modos possíveis
+-- Remap everything
 vim.keymap.set('i', '<C-E>', smart_mode_toggle, { noremap = true, silent = true })
 vim.keymap.set('n', '<C-E>', smart_mode_toggle, { noremap = true, silent = true })
 vim.keymap.set('v', '<C-E>', smart_mode_toggle, { noremap = true, silent = true })
@@ -351,12 +352,12 @@ vim.keymap.set('x', '<C-E>', smart_mode_toggle, { noremap = true, silent = true 
 vim.keymap.set('c', '<C-E>', '<C-C><Cmd>lua smart_mode_toggle()<CR>', { noremap = true, silent = true })
 vim.keymap.set('o', '<C-E>', smart_mode_toggle, { noremap = true, silent = true })
 
--- Tornar a função acessível globalmente para o modo Command
+-- Declare global variable
 _G.smart_mode_toggle = smart_mode_toggle
 
 
 
--- Go to line [Ctrl + G]
+-- Go to line [CTRL + G]
 local function goto_line()
   local was_insert = vim.fn.mode() == 'i'
   if was_insert then
@@ -378,7 +379,7 @@ end
 
 
 
--- Move lines up/down with Alt+Up/Down
+-- Move lines up/down [ALT + Up/Down]
 vim.keymap.set('i', '<M-Up>', '<Esc>:m .-2<CR>==gi', { noremap = true, silent = true })
 vim.keymap.set('i', '<M-Down>', '<Esc>:m .+1<CR>==gi', { noremap = true, silent = true })
 vim.keymap.set('n', '<M-Up>', ':m .-2<CR>==', { noremap = true, silent = true })
@@ -388,7 +389,7 @@ vim.keymap.set('v', '<M-Down>', ":move '>+1<CR>gv=gv", { noremap = true, silent 
 
 
 
--- Multi-line indentation in Visual/Select Mode [Tab / Shift+Tab]
+-- Multi-line indentation in Visual/Select Mode [TAB / SHIFT + TAB]
 -- Indent selected lines with Tab (works in both Visual and Select modes)
 vim.keymap.set('v', '<Tab>', '<Esc>`>a<CR><Esc>gv><Esc>gv', { noremap = true, silent = true })
 vim.keymap.set('s', '<Tab>', '<Esc>gv><Esc>gv', { noremap = true, silent = true })
@@ -403,3 +404,25 @@ vim.keymap.set('x', '<S-Tab>', '<gv', { noremap = true, silent = true })
 
 -- Delete previous word in Insert Mode [Ctrl + Backspace]
 vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
+
+
+
+-- Smart arrow keys behavior in Visual/Select modes
+-- Left Arrow: go to start of selection and exit visual mode
+vim.keymap.set('v', '<Left>', '<Esc>`<', { noremap = true, silent = true })
+vim.keymap.set('s', '<Left>', '<Esc>`<', { noremap = true, silent = true })
+vim.keymap.set('x', '<Left>', '<Esc>`<', { noremap = true, silent = true })
+
+-- Right Arrow: go to end of selection and exit visual mode
+vim.keymap.set('v', '<Right>', '<Esc>`>a', { noremap = true, silent = true })
+vim.keymap.set('s', '<Right>', '<Esc>`>a', { noremap = true, silent = true })
+vim.keymap.set('x', '<Right>', '<Esc>`>a', { noremap = true, silent = true })
+
+-- Up/Down arrows also leaves selection mode
+vim.keymap.set('v', '<Up>', '<Esc>`<k', { noremap = true, silent = true })
+vim.keymap.set('s', '<Up>', '<Esc>`<k', { noremap = true, silent = true })
+vim.keymap.set('x', '<Up>', '<Esc>`<k', { noremap = true, silent = true })
+
+vim.keymap.set('v', '<Down>', '<Esc>`>j', { noremap = true, silent = true })
+vim.keymap.set('s', '<Down>', '<Esc>`>j', { noremap = true, silent = true })
+vim.keymap.set('x', '<Down>', '<Esc>`>j', { noremap = true, silent = true })
