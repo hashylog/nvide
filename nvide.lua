@@ -17,14 +17,15 @@ local Settings = {
   ['Find'] = {
     ['Enabled'] = true,
     ['Shortcut'] = '<C-F>',
+    ['UseF3Navigation'] = false
   },
   ['FindFiles'] = {
     ['Enabled'] = true,
-    ['Shortcut'] = '<C-P>',
+    ['Shortcut'] = '<C-P>'
   },
   ['GoToLine'] = {
     ['Enabled'] = true,
-    ['Shortcut'] = '<C-G>',
+    ['Shortcut'] = '<C-G>'
   },
 }
 
@@ -311,7 +312,7 @@ local function smart_quit()
   if #vim.fn.getbufinfo({buflisted = 1}) == 1 then
     vim.cmd('quit')
   else
-    vim.cmd('bdelete')
+    vim.cmd('Bdelete')
   end
 end
 
@@ -404,6 +405,68 @@ vim.keymap.set('x', '<S-Tab>', '<gv', { noremap = true, silent = true })
 
 -- Delete previous word in Insert Mode [Ctrl + Backspace]
 vim.keymap.set('i', '<C-BS>', '<C-W>', { noremap = true })
+
+
+
+-- Find (VSCode-like search) [CTRL + F]
+-- Search options
+vim.opt.incsearch = true   -- Show matches as you type
+vim.opt.hlsearch = true    -- Highlight all matches
+vim.opt.ignorecase = true  -- Case-insensitive search
+vim.opt.smartcase = true   -- Case-sensitive if uppercase is used
+
+local function start_search()
+  local was_insert = vim.fn.mode() == 'i'
+  if was_insert then
+    vim.cmd('stopinsert')
+  end
+  -- Start search mode with /
+  vim.api.nvim_feedkeys('/', 'n', false)
+end
+
+if Settings['Find']['Enabled'] then
+  -- Start search
+  vim.keymap.set('n', Settings['Find']['Shortcut'], start_search, { noremap = true, silent = true })
+  vim.keymap.set('i', Settings['Find']['Shortcut'], start_search, { noremap = true, silent = true })
+  vim.keymap.set('v', Settings['Find']['Shortcut'], 'y/<C-R>"<CR>', { noremap = true, silent = true }) -- Search selected text
+
+  -- Navigate results with Up/Down in command-line mode (search)
+  vim.keymap.set('c', '<Down>', function()
+    if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
+      return '<C-g>'  -- Next match
+    end
+    return '<Down>'
+  end, { expr = true })
+
+  vim.keymap.set('c', '<Up>', function()
+    if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
+      return '<C-t>'  -- Previous match
+    end
+    return '<Up>'
+  end, { expr = true })
+
+  -- Clear highlight on Escape in normal mode
+  vim.keymap.set('n', '<Esc>', ':nohlsearch<CR><Esc>', { noremap = true, silent = true })
+
+  -- Navigate between matches with F3 / Shift+F3 (like VSCode)
+  if Settings['Find']['UseF3Navigation'] then
+    vim.keymap.set({'n', 'i'}, '<F3>', function()
+      vim.cmd('normal! n')
+    end, { noremap = true, silent = true })
+
+    vim.keymap.set({'n', 'i'}, '<S-F3>', function()
+      vim.cmd('normal! N')
+    end, { noremap = true, silent = true })
+  else
+    -- Clear highlights after pressing Enter when F3 navigation is disabled
+    vim.keymap.set('c', '<CR>', function()
+      if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
+        return '<CR>:nohlsearch<CR>'
+      end
+      return '<CR>'
+    end, { expr = true })
+  end
+end
 
 
 
