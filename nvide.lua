@@ -270,6 +270,26 @@ vim.cmd [[
 
 
 
+-- Auto-close empty buffers when opening a new file
+vim.api.nvim_create_autocmd('BufReadPost', {
+  callback = function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if buf ~= vim.api.nvim_get_current_buf()
+        and vim.api.nvim_buf_is_loaded(buf)
+        and vim.api.nvim_buf_get_name(buf) == ''
+        and vim.bo[buf].buftype == ''
+        and vim.bo[buf].modified == false
+        and vim.api.nvim_buf_line_count(buf) <= 1
+        and vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] == ''
+      then
+        vim.api.nvim_buf_delete(buf, { force = true })
+      end
+    end
+  end,
+})
+
+
+
 -- Save buffer [CTRL + S]
 local function smart_save()
   -- Check if the buffer has a filename
